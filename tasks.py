@@ -1,3 +1,4 @@
+import time
 from crewai import Task
 from agents import (
     create_research_agent,
@@ -5,6 +6,19 @@ from agents import (
     create_analysis_agent,
     create_summary_agent,
 )
+
+
+INTER_TASK_DELAY = 25  # seconds
+
+
+def sleep_callback(output):
+    """
+    Called after each task completes.
+    Sleeps to let Groq's token-per-minute window reset.
+    """
+    print(f"\n⏳ Waiting {INTER_TASK_DELAY}s before next agent (rate limit protection)...\n")
+    time.sleep(INTER_TASK_DELAY)
+    return output
 
 
 def create_tasks(research_question: str):
@@ -24,59 +38,65 @@ def create_tasks(research_question: str):
     analysis_agent = create_analysis_agent()
     summary_agent  = create_summary_agent()
 
-    # ── Task 1: Search ArXiv for papers ──────────────────────
+    # ── Task 1: Search ArXiv ──────────────────────────────────
     research_task = Task(
         description=(
             f"Search ArXiv for peer-reviewed papers on:\n\n'{research_question}'\n\n"
-            f"Use the ArXiv search tool with 2-3 different queries to find "
+            f"Use the ArXiv search tool with 2 different queries to find "
             f"at least 4 relevant papers. For each paper record: title, "
-            f"authors, publication date, URL, and full abstract."
+            f"authors, publication date, URL, and abstract. "
+            f"Keep your final answer concise — list the papers only."
         ),
         expected_output=(
-            "A numbered list of at least 4 medical research papers, each with: "
-            "title, authors, publication date, ArXiv URL, and abstract."
+            "A numbered list of 4 medical research papers, each with: "
+            "title, authors, publication date, ArXiv URL, and abstract. "
+            "No extra commentary."
         ),
         agent=research_agent,
+        callback=sleep_callback,        # Wait after this task finishes
     )
 
-    # ── Task 2: Extract key info from each paper ──────────────
+    # ── Task 2: Extract key info ──────────────────────────────
     reading_task = Task(
         description=(
             f"Read the papers about '{research_question}' and extract "
-            f"for each: study design, core hypothesis, methodology, "
-            f"key findings, limitations, and clinical implications."
+            f"for each paper ONLY: study design, key findings, and "
+            f"clinical implications. Be brief — 3-4 sentences per paper max."
         ),
         expected_output=(
-            "A structured breakdown per paper with sections: Title, Study Design, "
-            "Hypothesis, Methodology, Key Findings, Limitations, Clinical Implications."
+            "A brief structured breakdown per paper with: "
+            "Title, Study Design, Key Findings, Clinical Implications. "
+            "Max 4 sentences per section."
         ),
         agent=reader_agent,
         context=[research_task],
+        callback=sleep_callback,        # Wait after this task finishes
     )
 
-    # ── Task 3: Compare findings across papers ────────────────
+    # ── Task 3: Compare findings ──────────────────────────────
     analysis_task = Task(
         description=(
-            f"Compare the papers on '{research_question}'. Cover: "
-            f"(1) consensus findings, (2) contradictions, "
-            f"(3) methodological differences, (4) evidence strength, "
-            f"(5) research gaps, (6) most important finding overall."
+            f"Compare the papers on '{research_question}'. "
+            f"Write 2-3 sentences each on: "
+            f"(1) consensus findings, (2) contradictions or gaps, "
+            f"(3) overall evidence strength. Be concise."
         ),
         expected_output=(
-            "A comparative analysis with sections: Consensus Findings, "
-            "Contradictions, Methodological Comparison, Evidence Strength, "
-            "Research Gaps, and Most Significant Finding."
+            "A short comparative analysis with 3 sections: "
+            "Consensus Findings, Contradictions & Gaps, Evidence Strength. "
+            "2-3 sentences per section maximum."
         ),
         agent=analysis_agent,
         context=[reading_task],
+        callback=sleep_callback,        # Wait after this task finishes
     )
 
-    # ── Task 4: Write the final report ───────────────────────
+    # ── Task 4: Write final report ────────────────────────────
     summary_task = Task(
         description=(
-            f"Write a complete professional medical research report on:\n\n"
+            f"Write a professional medical research report on:\n\n"
             f"'{research_question}'\n\n"
-            f"Use this exact structure:\n"
+            f"Use this exact structure (keep each section concise):\n"
             f"1. EXECUTIVE SUMMARY\n"
             f"2. BACKGROUND\n"
             f"3. PAPERS REVIEWED\n"
@@ -88,9 +108,8 @@ def create_tasks(research_question: str):
             f"9. CONCLUSION"
         ),
         expected_output=(
-            "A complete professionally formatted medical research report "
-            "with all 9 sections clearly labelled. Minimum 600 words. "
-            "Written in clear professional prose suitable for a clinical audience."
+            "A complete medical research report with all 9 sections labelled. "
+            "Written in clear professional prose for a clinical audience."
         ),
         agent=summary_agent,
         context=[research_task, reading_task, analysis_task],

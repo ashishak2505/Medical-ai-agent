@@ -383,12 +383,15 @@ elif run_clicked and question.strip():
     start_time   = time.time()
 
     try:
-        with st.spinner("Running 4 agents sequentially — this takes 1-3 minutes..."):
+        with st.spinner("Running 4 agents sequentially — takes 3-4 minutes (includes rate limit delays)..."):
             for prog, msg in [
                 (0.10, "🔍 Research Agent searching ArXiv..."),
-                (0.35, "📖 Reader Agent extracting information..."),
-                (0.60, "🔬 Analysis Agent comparing findings..."),
-                (0.85, "📝 Summary Agent writing report..."),
+                (0.35, "⏳ Waiting 25s before Reader Agent (rate limit protection)..."),
+                (0.50, "📖 Reader Agent extracting information..."),
+                (0.65, "⏳ Waiting 25s before Analysis Agent..."),
+                (0.75, "🔬 Analysis Agent comparing findings..."),
+                (0.88, "⏳ Waiting 25s before Summary Agent..."),
+                (0.93, "📝 Summary Agent writing report..."),
             ]:
                 progress_bar.progress(prog)
                 status_text.markdown(f"**{msg}**")
@@ -449,17 +452,11 @@ if st.session_state.report:
                 )
                 body = "\n".join(lines[1:]).strip()
                 if body:
-                    st.markdown(
-                        f'<div style="color:#d0d4e4;line-height:1.8;'
-                        f'padding:0 0.5rem 0.5rem;font-size:0.95rem">{body}</div>',
-                        unsafe_allow_html=True,
-                    )
+                    # Render markdown properly (bold, bullets etc.)
+                    st.markdown(body)
             else:
-                st.markdown(
-                    f'<div style="color:#d0d4e4;line-height:1.8;'
-                    f'font-size:0.95rem;margin-bottom:0.5rem">{s}</div>',
-                    unsafe_allow_html=True,
-                )
+                # Render markdown properly
+                st.markdown(s)
 
     with tab2:
         st.text_area(

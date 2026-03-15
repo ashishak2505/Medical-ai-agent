@@ -4,7 +4,6 @@
 # =============================================================
 
 import os
-import time
 from crewai import Agent, LLM
 from tools import arxiv_search_tool
 
@@ -16,9 +15,9 @@ def build_llm() -> LLM:
     higher rate limits than the 70b model on Groq's free tier.
     """
     return LLM(
-        model="groq/llama-3.1-8b-instant",   # Higher TPM limit on free tier
+        model="groq/llama-3.1-8b-instant",
         temperature=0.3,
-        max_tokens=1024,                       # Keep responses concise to save tokens
+        max_tokens=600,
         api_key=os.getenv("GROQ_API_KEY"),
     )
 
@@ -45,7 +44,8 @@ def create_research_agent() -> Agent:
         llm=llm,
         verbose=True,
         allow_delegation=False,
-        max_iter=3,                            
+        max_iter=3,
+        max_rpm=3,
     )
 
 
@@ -68,6 +68,7 @@ def create_reader_agent() -> Agent:
         verbose=True,
         allow_delegation=False,
         max_iter=2,
+        max_rpm=3,
     )
 
 
@@ -90,6 +91,7 @@ def create_analysis_agent() -> Agent:
         verbose=True,
         allow_delegation=False,
         max_iter=2,
+        max_rpm=3,
     )
 
 
@@ -113,4 +115,5 @@ def create_summary_agent() -> Agent:
         verbose=True,
         allow_delegation=False,
         max_iter=2,
+        max_rpm=3,
     )
