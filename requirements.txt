@@ -1,0 +1,6 @@
+crewai==1.10.1
+groq==0.9.0
+arxiv==2.1.0
+python-dotenv==1.1.1
+langchain-groq==0.3.0
+streamlit>=1.32.0
