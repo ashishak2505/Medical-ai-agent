@@ -1,7 +1,4 @@
-# =============================================================
-# agents.py — Four collaborative AI agents
-# Compatible with crewai 1.x
-# =============================================================
+
 
 import os
 from crewai import Agent, LLM
