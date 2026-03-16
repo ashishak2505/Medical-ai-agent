@@ -1,6 +1,20 @@
+# ── Core framework ────────────────────────────────────────────
 crewai==1.10.1
-groq==0.9.0
-arxiv==2.1.0
-python-dotenv==1.1.1
-langchain-groq==0.3.0
-streamlit>=1.32.0
+
+# ── LLM provider bridge (required for Groq support in CrewAI) ─
+litellm>=1.40.0,<2.0.0
+
+# ── Groq client ───────────────────────────────────────────────
+groq>=0.9.0,<1.0.0
+
+# ── ArXiv paper search ────────────────────────────────────────
+arxiv>=2.1.0,<3.0.0
+
+# ── Environment variable loading ──────────────────────────────
+python-dotenv>=1.1.0,<2.0.0
+
+# ── LangChain Groq integration ────────────────────────────────
+langchain-groq>=0.3.0,<1.0.0
+
+# ── Streamlit UI ──────────────────────────────────────────────
+streamlit>=1.32.0,<2.0.0

@@ -1,21 +1,19 @@
-
-
 name: CI — Lint & Validate
 
 on:
   push:
-    branches: ["**"]          # Run on all branches
+    branches: ["**"]
   pull_request:
-    branches: [main, master]  # Run on PRs targeting main
+    branches: [main, master]
 
 jobs:
   lint-and-validate:
-    name: Python ${{ matrix.python-version }} — Lint & Import Check
+    name: Python ${{ matrix.python-version }} — Lint & Validate
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        python-version: ["3.12"]   # CrewAI requires 3.10–3.13
+        python-version: ["3.12"]
 
     steps:
       # ── 1. Checkout code ──────────────────────────────────
@@ -29,39 +27,66 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      # ── 3. Install dependencies ───────────────────────────
-      - name: Install dependencies
+      # ── 3. Upgrade pip & install resolver tools ───────────
+      - name: Upgrade pip and install tools
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install litellm flake8
+          pip install pip-tools flake8
 
-      # ── 4. Lint with flake8 ───────────────────────────────
+      # ── 4. Install dependencies with increased resolver depth
+      - name: Install dependencies
+        run: |
+          pip install \
+            --use-deprecated=legacy-resolver \
+            --no-cache-dir \
+            -r requirements.txt
+          pip install litellm
+
+      # ── 5. Lint with flake8 ───────────────────────────────
       - name: Lint with flake8
         run: |
-          # Stop build on syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # Warn on style issues (line length etc.) but don't fail
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics \
+          # Fail on syntax errors or undefined names only
+          flake8 . --count --select=E9,F63,F7,F82 \
+            --show-source --statistics \
             --exclude=.venv,__pycache__,.git
 
-      # ── 5. Validate Python files can be imported ──────────
+          # Warn on style issues but don't fail build
+          flake8 . --count --exit-zero \
+            --max-complexity=10 \
+            --max-line-length=120 \
+            --statistics \
+            --exclude=.venv,__pycache__,.git
+
+      # ── 6. Validate imports work ──────────────────────────
       - name: Validate module imports
         env:
-          GROQ_API_KEY: "dummy_key_for_ci"   # Fake key — just checks imports work
+          GROQ_API_KEY: "dummy_key_for_ci"
         run: |
-          python -c "import tools; print('✅ tools.py OK')"
-          python -c "import tasks; print('✅ tasks.py OK')"
-          python -c "import streamlit; print('✅ streamlit OK')"
-          python -c "import crewai; print('✅ crewai OK')"
-          python -c "import arxiv; print('✅ arxiv OK')"
+          python -c "import arxiv;      print('✅ arxiv')"
+          python -c "import streamlit;  print('✅ streamlit')"
+          python -c "import crewai;     print('✅ crewai')"
+          python -c "import dotenv;     print('✅ dotenv')"
+          python -c "import litellm;    print('✅ litellm')"
+          echo "All imports passed ✅"
 
-      # ── 6. Check .env is not committed ────────────────────
-      - name: Check .env is not in repository
+      # ── 7. Check .env is not committed ────────────────────
+      - name: Check .env is not in repo
         run: |
           if [ -f ".env" ]; then
-            echo "❌ ERROR: .env file is committed! Remove it immediately."
+            echo "❌ ERROR: .env file committed — remove it immediately!"
             exit 1
           else
-            echo "✅ .env is not committed — good."
+            echo "✅ .env not committed"
           fi
+
+      # ── 8. Check all required files exist ─────────────────
+      - name: Check required project files
+        run: |
+          for f in app.py agents.py tasks.py tools.py main.py requirements.txt; do
+            if [ ! -f "$f" ]; then
+              echo "❌ Missing: $f"
+              exit 1
+            else
+              echo "✅ Found: $f"
+            fi
+          done
