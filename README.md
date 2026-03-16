@@ -13,8 +13,9 @@
 
 ## 📸 Demo
 
-C:\Users\anku3\medical_agent\data\medical_ai.png
-C:\Users\anku3\medical_agent\data\medical_ai1.png
+![Medical AI UI](data/medical_ai.png)
+
+![Medical AI Output](data/medical_ai1.png)
 
 ---
 
@@ -84,7 +85,6 @@ medical-agent/
 └── .github/
     └── workflows/
         ├── ci.yml      # CI — runs on every push/PR (lint + test)
-        └── cd.yml      # CD — deploys to Streamlit Cloud on main merge
 ```
 
 ---
@@ -97,8 +97,7 @@ medical-agent/
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-cd YOUR_REPO
+git clone https://github.com/ashishak2505/Medical-ai-agent.git
 ```
 
 ### 2. Create a virtual environment
